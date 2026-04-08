@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover" />
+  <title>Amit.Mail | Pro Glass</title>
+  <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ios-blue: #007AFF;
+      --glass-bg: rgba(255, 255, 255, 0.75);
+      --glass-border: rgba(255, 255, 255, 0.4);
+      --pill-bg: rgba(0, 122, 255, 0.1);
+      --text-black: #1c1c1e;
+      --text-red: #FF3B30;
+      --text-sec: #8E8E93;
+      --bg-gradient: linear-gradient(160deg, #e2e8f0 0%, #cbd5e1 100%);
+    }
+
+    body[data-theme="dark"] {
+      --glass-bg: rgba(28, 28, 30, 0.85);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --pill-bg: rgba(255, 255, 255, 0.1);
+      --text-black: #ffffff;
+      --bg-gradient: linear-gradient(160deg, #0f172a 0%, #000000 100%);
+    }
+
+    body {
+      font-family: 'SF Pro Display', -apple-system, sans-serif;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      margin: 0; color: var(--text-black);
+      min-height: 100dvh; /* Dynamic Viewport Height */
+      display: flex; justify-content: center;
+      transition: background 0.5s;
+    }
+
+    /* 🚨 Custom Toast */
+    #toast {
+      position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+      background: var(--glass-bg); backdrop-filter: blur(20px);
+      padding: 12px 24px; border-radius: 25px; border: 1px solid var(--glass-border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 10000;
+      transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      font-weight: 600; font-size: 14px; text-align: center;
+    }
+
+    /* 🌀 Dynamic Loader */
+    #loader {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.05); backdrop-filter: blur(8px);
+      display: none; justify-content: center; align-items: center; z-index: 9999;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid rgba(0, 122, 255, 0.1);
+      border-left-color: var(--ios-blue); border-radius: 50%;
+      animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 📱 Frame Container */
+    .iphone-frame {
+      width: 100%; max-width: 480px;
+      min-height: 100dvh;
+      background: var(--glass-bg); backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border-left: 1px solid var(--glass-border); border-right: 1px solid var(--glass-border);
+      padding: 20px 20px 90px; /* Padding for Tab Bar */
+      box-sizing: border-box; display: flex; flex-direction: column;
+      position: relative;
+    }
+
+    /* ➕ Floating Compose Button */
+    #floatingCompose {
+      position: fixed; bottom: 100px; right: 20px;
+      width: 56px; height: 56px; background: var(--ios-blue);
+      color: white; border-radius: 50%; display: none;
+      justify-content: center; align-items: center;
+      font-size: 28px; cursor: pointer;
+      box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+      z-index: 950; transition: transform 0.2s;
+    }
+    #floatingCompose:active { transform: scale(0.9); }
+
+    .header-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 8px 16px; background: var(--pill-bg);
+      color: var(--ios-blue); border-radius: 20px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      min-height: 36px; box-sizing: border-box;
+    }
+
+    .brand-logo { font-weight: 800; font-size: 28px; letter-spacing: -1px; margin-top: 15px; }
+    .brand-amit { color: var(--text-black); }
+    .brand-mail { color: var(--text-red); }
+
+    .header { margin-bottom: 20px; }
+    .top-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+
+    .card {
+      background: rgba(255, 255, 255, 0.3); border-radius: 20px;
+      padding: 18px; margin-bottom: 20px; border: 0.5px solid var(--glass-border);
+    }
+
+    input, textarea {
+      width: 100%; background: rgba(120, 120, 128, 0.1); border: none;
+      padding: 14px; border-radius: 12px; color: var(--text-black);
+      font-size: 16px; margin-top: 10px; box-sizing: border-box; outline: none;
+      font-family: inherit;
+    }
+
+    .btn {
+      background: var(--ios-blue); color: white; border: none;
+      padding: 14px; border-radius: 12px; font-weight: 600; width: 100%;
+      cursor: pointer; transition: 0.2s;
+    }
+    
+    .refresh-btn {
+      background: none; border: 1.5px solid var(--ios-blue); color: var(--ios-blue);
+      padding: 6px 14px; border-radius: 18px; font-size: 12px; font-weight: 700;
+      cursor: pointer;
+    }
+
+    .list-item { padding: 18px 0; border-bottom: 0.5px solid var(--glass-border); cursor: pointer; }
+    .subject { font-weight: 700; font-size: 17px; }
+    .sender { color: var(--text-sec); font-size: 14px; margin-top: 2px; }
+
+    /* 📌 FIXED STICKY FOOTER (Uses dvh for keyboard awareness) */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px; height: 75px;
+      background: var(--glass-bg); backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      display: flex; justify-content: space-around; align-items: center;
+      border-top: 0.5px solid var(--glass-border); 
+      padding-bottom: env(safe-area-inset-bottom, 5px);
+      z-index: 1000;
+    }
+    .tab-item { color: var(--text-sec); font-size: 12px; font-weight: 600; cursor: pointer; flex: 1; text-align: center; }
+    .tab-item.active { color: var(--ios-blue); }
+
+    .hidden { display: none; }
+    footer { text-align: center; margin-top: auto; padding: 20px 0 20px; }
+
+  </style>
+</head>
+<body data-theme="light">
+
+  <div id="toast">Message here</div>
+  <div id="loader"><div class="spinner"></div></div>
+
+  <div id="floatingCompose" onclick="showCompose()">+</div>
+
+  <div class="iphone-frame">
+    <div class="header">
+      <div class="top-row">
+        <div id="liveEmailBadge" class="header-pill">amit.mail</div>
+        <div id="themeToggle" class="header-pill">Dark Mode</div>
+      </div>
+      
+      <div class="brand-logo">
+        <span class="brand-amit">AMIT</span><span class="brand-mail">MAIL</span>
+      </div>
+      <div style="display:flex; align-items:center; margin-top:10px; justify-content: space-between;">
+        <h2 id="viewTitle" style="font-size: 32px; margin: 0; letter-spacing: -1px; font-weight: 700;">Inbox</h2>
+        <button id="manualRefresh" class="refresh-btn hidden">Refresh</button>
+      </div>
+    </div>
+
+    <div id="authSection">
+      <div class="card">
+        <input id="username" placeholder="Username" oninput="updatePreview(this.value)"/>
+        <input id="password" type="password" placeholder="Password" style="margin-top:12px;"/>
+        <button class="btn" id="loginBtn" style="margin-top:20px;">Login</button>
+        <button class="btn" id="signupBtn" style="background:rgba(120,120,128,0.2); color:var(--ios-blue); margin-top:10px;">Create Account</button>
+      </div>
+    </div>
+
+    <div id="contentArea" class="hidden">
+      <div id="listPanel">
+        <input type="text" id="searchBar" placeholder="Search..." style="margin-bottom: 15px; background: rgba(120,120,128,0.06);" />
+        <div id="mailList"></div>
+      </div>
+
+      <div id="composePanel" class="hidden">
+        <input id="toUser" placeholder="To:" />
+        <input id="subject" placeholder="Subject" />
+        <textarea id="body" rows="10" placeholder="Type message..."></textarea>
+        <button class="btn" id="sendBtn" style="margin-top:15px;">Send Message</button>
+      </div>
+
+      <div id="readPanel" class="hidden">
+        <div id="readFrom" style="font-weight: 700; font-size: 18px;"></div>
+        <div id="readTime" style="font-size: 12px; color: var(--text-sec); margin-bottom: 15px;"></div>
+        <pre id="readBody" style="white-space: pre-wrap; font-family: inherit; font-size: 16px; line-height: 1.6; border-left: 3px solid var(--ios-blue); padding-left: 15px;"></pre>
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+          <button class="btn" id="replyBtn" style="flex: 2;">Reply</button>
+          <button class="btn" onclick="showInbox()" style="flex: 1; background: rgba(120,120,128,0.1); color: var(--text-black);">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="brand-logo" style="font-size: 18px; opacity: 0.5; filter: grayscale(1);">
+        <span class="brand-amit">AMIT</span><span class="brand-mail">MAIL</span>
+      </div>
+    </footer>
+
+    <div class="tab-bar hidden" id="tabBar">
+      <div class="tab-item active" onclick="showInbox()">Inbox</div>
+      <div class="tab-item" onclick="showSent()">Sent</div>
+      <div class="tab-item" onclick="showCompose()">Compose</div>
+      <div class="tab-item" id="logoutBtn">Logout</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+    import { getDatabase, ref, set, push, onValue, get } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyALHFd8-PhTpNSn8ipHlLsQYeUjEiBDRMs",
+      authDomain: "chat2-6bd92.firebaseapp.com",
+      databaseURL: "https://chat2-6bd92-default-rtdb.firebaseio.com",
+      projectId: "chat2-6bd92",
+      storageBucket: "chat2-6bd92.firebasestorage.app",
+      messagingSenderId: "1033455440282",
+      appId: "1:1033455440282:web:9f867c81905dcd48902a23"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const DOMAIN = '@amit.mail';
+    let currentUser = null;
+    let currentType = 'inbox';
+
+    const showLoader = () => { document.getElementById('loader').style.display = 'flex'; };
+    const hideLoader = () => { document.getElementById('loader').style.display = 'none'; };
+
+    window.showPopup = (msg) => {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.style.top = '30px';
+      setTimeout(() => { t.style.top = '-100px'; }, 2500);
+    };
+
+    window.updatePreview = (val) => {
+        document.getElementById('liveEmailBadge').textContent = (val || 'amit') + DOMAIN;
+    };
+
+    document.getElementById('themeToggle').onclick = () => {
+      const b = document.body;
+      b.dataset.theme = b.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.getElementById('themeToggle').textContent = b.dataset.theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    };
+
+    document.getElementById('manualRefresh').onclick = () => {
+        showLoader(); loadMail(currentType);
+    };
+
+    document.getElementById('logoutBtn').onclick = async () => {
+      showLoader(); await signOut(auth); location.reload();
+    };
+
+    document.getElementById('signupBtn').onclick = async () => {
+      const u = document.getElementById('username').value.trim().toLowerCase();
+      const p = document.getElementById('password').value;
+      if(u.length < 3) return showPopup("Min 3 chars");
+      showLoader();
+      try {
+        const res = await createUserWithEmailAndPassword(auth, u + DOMAIN, p);
+        await set(ref(db, `usernames/${u}`), res.user.uid);
+      } catch (e) { showPopup(e.message); hideLoader(); }
+    };
+
+    document.getElementById('loginBtn').onclick = async () => {
+      const u = document.getElementById('username').value.trim().toLowerCase();
+      const p = document.getElementById('password').value;
+      showLoader();
+      try { await signInWithEmailAndPassword(auth, u + DOMAIN, p); } 
+      catch (e) { showPopup("Login Failed!"); hideLoader(); }
+    };
+
+    onAuthStateChanged(auth, user => {
+      showLoader();
+      currentUser = user;
+      if (user) {
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('contentArea').classList.remove('hidden');
+        document.getElementById('tabBar').classList.remove('hidden');
+        document.getElementById('floatingCompose').style.display = 'flex';
+        document.getElementById('manualRefresh').classList.remove('hidden');
+        document.getElementById('liveEmailBadge').textContent = user.email;
+        showInbox();
+      } else {
+        document.getElementById('authSection').classList.remove('hidden');
+        document.getElementById('contentArea').classList.add('hidden');
+        document.getElementById('tabBar').classList.add('hidden');
+        document.getElementById('floatingCompose').style.display = 'none';
+        document.getElementById('manualRefresh').classList.add('hidden');
+        document.getElementById('viewTitle').textContent = "Sign In";
+        hideLoader();
+      }
+    });
+
+    window.showInbox = () => { currentType='inbox'; switchView('Inbox', 'listPanel', 0); loadMail('inbox'); };
+    window.showSent = () => { currentType='sent'; switchView('Sent', 'listPanel', 1); loadMail('sent'); };
+    window.showCompose = () => { 
+        document.getElementById('toUser').value = '';
+        document.getElementById('subject').value = '';
+        document.getElementById('body').value = '';
+        switchView('Compose', 'composePanel', 2); 
+    };
+
+    function switchView(title, panelId, tabIdx) {
+      document.getElementById('viewTitle').textContent = title;
+      ['listPanel', 'composePanel', 'readPanel'].forEach(p => {
+          document.getElementById(p).classList.toggle('hidden', p !== panelId);
+      });
+      document.querySelectorAll('.tab-item').forEach((t, i) => t.classList.toggle('active', i === tabIdx));
+      document.getElementById('floatingCompose').style.display = (panelId === 'listPanel') ? 'flex' : 'none';
+      window.scrollTo(0, 0);
+    }
+
+    async function loadMail(type) {
+      onValue(ref(db, `mail/${currentUser.uid}/${type}`), (snap) => {
+        const data = snap.val();
+        const list = document.getElementById('mailList');
+        list.innerHTML = '';
+        if (!data) {
+          list.innerHTML = '<p style="text-align:center; padding:50px; opacity:0.3;">No Messages</p>';
+        } else {
+          Object.keys(data).reverse().forEach(k => {
+            const m = data[k];
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `<div class="subject">${m.subject}</div><div class="sender">${type==='inbox'?'From: '+m.fromEmail:'To: '+m.toEmail}</div>`;
+            div.onclick = () => {
+              showLoader();
+              switchView('Message', 'readPanel', -1);
+              document.getElementById('readFrom').textContent = m.fromEmail || m.toEmail;
+              document.getElementById('readTime').textContent = new Date(m.timestamp).toLocaleString();
+              document.getElementById('readBody').textContent = m.body;
+              document.getElementById('replyBtn').onclick = () => {
+                document.getElementById('toUser').value = (m.fromEmail || m.toEmail).split('@')[0];
+                document.getElementById('subject').value = "Re: " + m.subject;
+                document.getElementById('body').value = "\n\n----------\n" + m.body;
+                switchView('Compose', 'composePanel', 2);
+              };
+              setTimeout(hideLoader, 300);
+            };
+            list.appendChild(div);
+          });
+        }
+        hideLoader();
+      }, () => hideLoader());
+    }
+
+    document.getElementById('sendBtn').onclick = async () => {
+      const to = document.getElementById('toUser').value.trim().toLowerCase();
+      const sub = document.getElementById('subject').value;
+      const msg = document.getElementById('body').value;
+      if(!to) return showPopup("Enter recipient!");
+      showLoader();
+      try {
+        const r = to.includes('@') ? to.split('@')[0] : to;
+        const snap = await get(ref(db, `usernames/${r}`));
+        if (snap.exists()) {
+          const mailData = { fromEmail: currentUser.email, subject: sub, body: msg, timestamp: Date.now() };
+          await push(ref(db, `mail/${snap.val()}/inbox`), mailData);
+          await push(ref(db, `mail/${currentUser.uid}/sent`), { ...mailData, toEmail: r + DOMAIN });
+          showPopup("Sent Successfully!"); showInbox();
+        } else { showPopup("User not found!"); hideLoader(); }
+      } catch (e) { showPopup("Error sending!"); hideLoader(); }
+    };
+  </script>
+</body>
+</html>
